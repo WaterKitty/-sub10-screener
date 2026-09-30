@@ -2,12 +2,19 @@ name: Daily sub-$10 screen
 
 on:
   schedule:
+    # UTC times. The first run at or after 6 AM PT does the screen; the rest are
+    # backups in case GitHub starts a run late or skips one.
     - cron: "30 13 * * 1-5"
+    - cron: "0 14 * * 1-5"
     - cron: "30 14 * * 1-5"
+    - cron: "0 15 * * 1-5"
+    - cron: "0 16 * * 1-5"
   workflow_dispatch: {}
 
 permissions:
   contents: write
+  pages: write
+  id-token: write
 
 concurrency:
   group: daily-screen
@@ -17,6 +24,8 @@ jobs:
   screen:
     runs-on: ubuntu-latest
     timeout-minutes: 50
+    environment:
+      name: github-pages
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
@@ -25,6 +34,7 @@ jobs:
           cache: pip
       - run: pip install -r requirements.txt
       - name: Run screen
+        id: run
         env:
           NTFY_TOPIC: ${{ secrets.NTFY_TOPIC }}
           PAGES_URL: ${{ vars.PAGES_URL }}
@@ -32,12 +42,24 @@ jobs:
           if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
             python daily_run.py --out docs --force
           else
-            python daily_run.py --out docs || true
+            python daily_run.py --out docs
           fi
       - name: Save results
+        if: steps.run.outputs.ran == 'true'
         run: |
           git config user.name "screener-bot"
           git config user.email "screener-bot@users.noreply.github.com"
           git add docs
           git diff --cached --quiet || git commit -m "Screen $(TZ=America/Los_Angeles date +%F)"
           git push
+      - name: Prepare dashboard
+        if: steps.run.outputs.ran == 'true'
+        uses: actions/configure-pages@v5
+      - name: Package dashboard
+        if: steps.run.outputs.ran == 'true'
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: docs
+      - name: Publish dashboard
+        if: steps.run.outputs.ran == 'true'
+        uses: actions/deploy-pages@v4
