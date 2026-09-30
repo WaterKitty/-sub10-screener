@@ -1,26 +1,22 @@
 {
-  "date": "2026-09-28",
-  "run_at": "2026-09-28 18:12",
-  "scored": 34,
-  "excluded": 528,
-  "top_tier": [
-    "GGN"
-  ],
+  "date": "2026-09-29",
+  "run_at": "2026-09-29 17:46",
+  "scored": 22,
+  "excluded": 431,
+  "top_tier": [],
   "watchlist": [
-    "JFR",
-    "ECC",
-    "JQC",
-    "PML",
-    "GAB",
-    "WIW",
-    "NUV",
-    "MYI",
     "PFN",
-    "OXLC",
     "DNP",
+    "NUV",
+    "OXLC",
+    "GAB",
     "MUC",
-    "UA",
-    "VMO",
-    "ETW"
+    "MQY",
+    "NMCO",
+    "ETW",
+    "NAD",
+    "NEA",
+    "ACP",
+    "UA"
   ]
 }
