@@ -219,14 +219,17 @@ def main():
     out = Path(a.out)
     out.mkdir(parents=True, exist_ok=True)
 
-    # GitHub cron is UTC, so the workflow fires at two UTC times to cover
-    # daylight saving. Only the one landing at 6-7 AM PT does the work.
+    # GitHub cron is UTC and scheduled runs often start late, so the workflow
+    # fires several times each morning. The first one at or after 6 AM PT does
+    # the work; later ones see today's results already exist and stop.
     if not (a.force or a.demo):
         latest = out / "latest.json"
-        if now.hour not in (6, 7):
-            sys.exit(f"{stamp} PT is outside the 6-7 AM window; skipping.")
+        if now.hour < 6:
+            print(f"{stamp} PT is before 6 AM; skipping.")
+            return
         if latest.exists() and json.loads(latest.read_text()).get("date") == today:
-            sys.exit("Already ran today; skipping.")
+            print("Already ran today; skipping.")
+            return
 
     if a.demo:
         raw = S.demo_data()
@@ -261,6 +264,10 @@ def main():
     print(top[["ticker", "price", "composite", "streak"]].to_string(index=False))
     if not a.demo:
         notify(top, stamp, url)
+    gh_out = os.environ.get("GITHUB_OUTPUT")
+    if gh_out:  # tells the workflow there is a new dashboard to publish
+        with open(gh_out, "a") as f:
+            f.write("ran=true\n")
 
 
 if __name__ == "__main__":
